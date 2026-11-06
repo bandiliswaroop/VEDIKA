@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -327,7 +328,7 @@ private fun ProfileStatColumn(
 }
 
 @Composable
-private fun ProfileMenuItem(
+fun ProfileMenuItem(
     icon: ImageVector,
     title: String,
     hasRedDot: Boolean = false,

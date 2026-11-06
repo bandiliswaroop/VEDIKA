@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,6 +32,7 @@ import coil.request.ImageRequest
 import com.example.data.VedikaData
 import com.example.ui.components.TempleVisualArt
 import com.example.ui.components.VedikaBottomBar
+import com.example.ui.components.discovery.DiscoveryUnavailableState
 import com.example.ui.theme.*
 import com.example.viewmodel.Screen
 import com.example.viewmodel.VedikaUiState
@@ -42,7 +44,8 @@ fun TempleDarshanScreen(
     uiState: VedikaUiState,
     modifier: Modifier = Modifier
 ) {
-    var selectedDarshanType by remember { mutableStateOf("General") } // "General", "Special", "VIP"
+    val isHindi = uiState.isHindi
+    var selectedDarshanType by remember { mutableStateOf("General") }
     var isFavorite by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -68,7 +71,6 @@ fun TempleDarshanScreen(
                         .fillMaxWidth()
                         .height(280.dp)
                 ) {
-                    // Temple Art / High Res Photography
                     TempleVisualArt(
                         templeName = "Baba Baidyanath Dham",
                         modifier = Modifier.fillMaxSize(),
@@ -86,7 +88,6 @@ fun TempleDarshanScreen(
                         modifier = Modifier.fillMaxSize()
                     )
 
-                    // Gradient scrim over image
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -101,7 +102,6 @@ fun TempleDarshanScreen(
                             )
                     )
 
-                    // Top Floating Buttons
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -153,7 +153,7 @@ fun TempleDarshanScreen(
                         .padding(horizontal = 20.dp)
                 ) {
                     Text(
-                        text = "Baidyanath Dham",
+                        text = if (isHindi) "बाबा बैद्यनाथ धाम, देवघर" else "Baidyanath Dham",
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.ExtraBold,
                             color = VedikaTextDark,
@@ -174,13 +174,7 @@ fun TempleDarshanScreen(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = "4.8",
-                            fontWeight = FontWeight.Bold,
-                            color = VedikaTextDark,
-                            fontSize = 13.sp
-                        )
-                        Text(
-                            text = "(2.5k reviews)",
+                            text = if (isHindi) "समुदाय समीक्षाएं उपलब्ध नहीं हैं" else "Community reviews unavailable",
                             color = VedikaTextMuted,
                             fontSize = 13.sp
                         )
@@ -197,7 +191,7 @@ fun TempleDarshanScreen(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Deoghar, Jharkhand",
+                            text = if (isHindi) "देवघर, झारखंड" else "Deoghar, Jharkhand",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = VedikaTextMedium,
                                 fontSize = 13.sp
@@ -215,9 +209,9 @@ fun TempleDarshanScreen(
                         .padding(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    TempleInfoChip(icon = "📖", label = "History", modifier = Modifier.weight(1f))
-                    TempleInfoChip(icon = "🖼️", label = "Gallery", modifier = Modifier.weight(1f))
-                    TempleInfoChip(icon = "⏰", label = "Timings", modifier = Modifier.weight(1f))
+                    TempleInfoChip(icon = "📖", label = if (isHindi) "इतिहास" else "History", modifier = Modifier.weight(1f))
+                    TempleInfoChip(icon = "🖼️", label = if (isHindi) "गैलरी" else "Gallery", modifier = Modifier.weight(1f))
+                    TempleInfoChip(icon = "⏰", label = if (isHindi) "समय" else "Timings", modifier = Modifier.weight(1f))
                 }
             }
 
@@ -229,7 +223,7 @@ fun TempleDarshanScreen(
                         .padding(horizontal = 20.dp)
                 ) {
                     Text(
-                        text = "About",
+                        text = if (isHindi) "मंदिर परिचय" else "About",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = VedikaTextDark,
@@ -240,7 +234,7 @@ fun TempleDarshanScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "One of the 12 Jyotirlingas of Lord Shiva, Baidyanath Dham is a sacred destination visited by millions of devotees every year.",
+                        text = if (isHindi) "भगवान शिव के 12 ज्योतिर्लिंगों में से एक, बाबा बैद्यनाथ धाम एक पवित्र तीर्थ स्थल है जहाँ लाखों श्रद्धालु प्रतिवर्ष आते हैं।" else "One of the 12 Jyotirlingas of Lord Shiva, Baidyanath Dham is a sacred destination visited by millions of devotees every year.",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = VedikaTextMedium,
                             fontSize = 13.sp,
@@ -251,7 +245,7 @@ fun TempleDarshanScreen(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Read More >",
+                        text = if (isHindi) "और पढ़ें >" else "Read More >",
                         style = MaterialTheme.typography.labelMedium.copy(
                             color = VedikaOrangeDark,
                             fontWeight = FontWeight.Bold,
@@ -262,7 +256,7 @@ fun TempleDarshanScreen(
                 }
             }
 
-            // 5. "Darshan Booking" Section with 3 Radio Card Options
+            // Darshan availability unavailable state
             item {
                 Column(
                     modifier = Modifier
@@ -271,7 +265,7 @@ fun TempleDarshanScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "Darshan Booking",
+                        text = if (isHindi) "दर्शन उपलब्धता" else "Darshan availability",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = VedikaTextDark,
@@ -279,70 +273,14 @@ fun TempleDarshanScreen(
                         )
                     )
 
-                    // General Darshan - Free
-                    DarshanOptionCard(
-                        title = "General Darshan",
-                        priceText = "Free",
-                        isSelected = selectedDarshanType == "General",
-                        onClick = { selectedDarshanType = "General" }
-                    )
-
-                    // Special Darshan - ₹251
-                    DarshanOptionCard(
-                        title = "Special Darshan",
-                        priceText = "₹251",
-                        isSelected = selectedDarshanType == "Special",
-                        onClick = { selectedDarshanType = "Special" }
-                    )
-
-                    // VIP Darshan - ₹501
-                    DarshanOptionCard(
-                        title = "VIP Darshan",
-                        priceText = "₹501",
-                        isSelected = selectedDarshanType == "VIP",
-                        onClick = { selectedDarshanType = "VIP" }
+                    DiscoveryUnavailableState(
+                        title = if (isHindi) "आधिकारिक दर्शन विवरण उपलब्ध नहीं है" else "Official darshan details are unavailable",
+                        message = if (isHindi) "मंदिर का आधिकारिक स्रोत कनेक्ट होने के बाद ही समय और पास शुल्क प्रदर्शित किए जाएंगे।" else "Times, passes, and fees are shown only after an official temple source is connected."
                     )
                 }
             }
 
-            // 6. "Book Darshan →" Large Pill CTA Button
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .height(52.dp)
-                        .shadow(8.dp, RoundedCornerShape(26.dp), spotColor = Color(0x35FF6B00))
-                        .clip(RoundedCornerShape(26.dp))
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(Color(0xFFFF6D00), Color(0xFFFF4500))
-                            )
-                        )
-                        .clickable { viewModel.startBooking("s1") },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Book Darshan",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                fontSize = 16.sp
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "Arrow",
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-
-            // 7. "Nearby Services" Section (Hotel, Food, Transport, Guide)
+            // 7. "Nearby Services" Section
             item {
                 Column(
                     modifier = Modifier
@@ -350,7 +288,7 @@ fun TempleDarshanScreen(
                         .padding(horizontal = 20.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "Nearby Services",
+                        text = if (isHindi) "आस-पास सुविधाएं" else "Nearby Services",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = VedikaTextDark,
@@ -364,10 +302,10 @@ fun TempleDarshanScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        NearbyServiceIconItem(icon = Icons.Outlined.Hotel, label = "Hotel")
-                        NearbyServiceIconItem(icon = Icons.Outlined.Restaurant, label = "Food")
-                        NearbyServiceIconItem(icon = Icons.Outlined.DirectionsCar, label = "Transport")
-                        NearbyServiceIconItem(icon = Icons.Outlined.Tour, label = "Guide")
+                        NearbyServiceIconItem(icon = Icons.Outlined.Hotel, label = if (isHindi) "होटल" else "Hotel")
+                        NearbyServiceIconItem(icon = Icons.Outlined.Restaurant, label = if (isHindi) "भोजन" else "Food")
+                        NearbyServiceIconItem(icon = Icons.Outlined.DirectionsCar, label = if (isHindi) "परिवहन" else "Transport")
+                        NearbyServiceIconItem(icon = Icons.Outlined.Tour, label = if (isHindi) "गाइड" else "Guide")
                     }
                 }
             }
@@ -400,77 +338,6 @@ private fun TempleInfoChip(
                     fontWeight = FontWeight.SemiBold,
                     color = VedikaTextDark,
                     fontSize = 12.sp
-                )
-            )
-        }
-    }
-}
-
-@Composable
-private fun DarshanOptionCard(
-    title: String,
-    priceText: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
-        color = VedikaSurface,
-        border = BorderStroke(
-            1.2.dp,
-            if (isSelected) VedikaOrange else VedikaCardBorder
-        ),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Radio button dot
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(CircleShape)
-                        .border(
-                            2.dp,
-                            if (isSelected) VedikaOrange else Color(0xFFB0A59A),
-                            CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isSelected) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(VedikaOrange)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = VedikaTextDark,
-                        fontSize = 14.sp
-                    )
-                )
-            }
-
-            Text(
-                text = priceText,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = if (priceText.startsWith("₹")) VedikaTextDark else VedikaOrangeDark,
-                    fontSize = 14.sp
                 )
             )
         }

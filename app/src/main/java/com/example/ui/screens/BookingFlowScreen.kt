@@ -114,11 +114,11 @@ fun BookingFlowScreen(
                                 )
                             )
                             .clickable {
-                                viewModel.selectBookingDateTime(
+                                viewModel.selectBookingDate(
                                     date = selectedDay.toString(),
-                                    dayName = "Sun",
-                                    time = selectedTimeSlot
+                                    dayName = "Sun"
                                 )
+                                viewModel.selectBookingTime(selectedTimeSlot)
                                 viewModel.proceedToPayment()
                             },
                         contentAlignment = Alignment.Center

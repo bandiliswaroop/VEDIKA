@@ -38,13 +38,14 @@ fun KathaBhajanScreen(
     uiState: com.example.viewmodel.VedikaUiState,
     modifier: Modifier = Modifier
 ) {
+    val isHindi = uiState.isHindi
     var selectedEventTab by remember { mutableStateOf("Upcoming") }
 
     Scaffold(
         containerColor = VedikaCream,
         topBar = {
             VedikaChildTopBar(
-                title = if (uiState.isHindi) "कथा, भजन एवं सत्संग" else "Katha, Bhajan & Satsang",
+                title = if (isHindi) "कथा, भजन एवं सत्संग" else "Katha, Bhajan & Satsang",
                 onBackClick = { viewModel.navigateTo(Screen.Home) }
             )
         },
@@ -62,7 +63,7 @@ fun KathaBhajanScreen(
             contentPadding = PaddingValues(bottom = 36.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Segmented Tabs: [Upcoming] | [Live Streaming] | [Past Recordings]
+            // Segmented Tabs
             item {
                 Surface(
                     shape = RoundedCornerShape(22.dp),
@@ -79,6 +80,13 @@ fun KathaBhajanScreen(
                     ) {
                         listOf("Upcoming", "Live Streaming", "Past Satsang").forEach { tab ->
                             val isSelected = selectedEventTab == tab
+                            val tabLabel = if (!isHindi) tab else when (tab) {
+                                "Upcoming" -> "आगामी"
+                                "Live Streaming" -> "लाइव प्रसारण"
+                                "Past Satsang" -> "पिछली कथा"
+                                else -> tab
+                            }
+
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -89,7 +97,7 @@ fun KathaBhajanScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = tab,
+                                    text = tabLabel,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
                                     fontSize = 14.sp,
                                     color = if (isSelected) Color.White else VedikaTextMedium
@@ -104,6 +112,7 @@ fun KathaBhajanScreen(
             items(VedikaData.kathaEvents) { event ->
                 KathaEventCard(
                     event = event,
+                    isHindi = isHindi,
                     onBookPass = {
                         viewModel.startBooking("s2")
                     }
@@ -116,6 +125,7 @@ fun KathaBhajanScreen(
 @Composable
 fun KathaEventCard(
     event: KathaEvent,
+    isHindi: Boolean = false,
     onBookPass: () -> Unit
 ) {
     Surface(
@@ -129,7 +139,6 @@ fun KathaEventCard(
             .shadow(4.dp, RoundedCornerShape(24.dp), spotColor = Color(0x10000000))
     ) {
         Column {
-            // Real Photography Banner with overlay date badge
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -193,7 +202,7 @@ fun KathaEventCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "Live Event",
+                                text = if (isHindi) "लाइव कथा" else "Live Event",
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp
@@ -283,7 +292,7 @@ fun KathaEventCard(
                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
                         modifier = Modifier.height(42.dp)
                     ) {
-                        Text("Register Free", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(if (isHindi) "पंजीकरण करें" else "Register Free", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
             }

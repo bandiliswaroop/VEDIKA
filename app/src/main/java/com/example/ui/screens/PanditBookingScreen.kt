@@ -186,7 +186,7 @@ fun PanditBookingScreen(
 }
 
 @Composable
-private fun PanditMockupCard(
+fun PanditMockupCard(
     pandit: PanditProfile,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,

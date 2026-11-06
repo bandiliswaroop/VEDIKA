@@ -38,6 +38,7 @@ fun PujaSamagriScreen(
     uiState: com.example.viewmodel.VedikaUiState,
     modifier: Modifier = Modifier
 ) {
+    val isHindi = uiState.isHindi
     val categories = listOf("All", "Puja Kits", "Havan Samagri", "Idols", "Diyas")
     var selectedCategory by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
@@ -57,7 +58,7 @@ fun PujaSamagriScreen(
         containerColor = VedikaCream,
         topBar = {
             VedikaChildTopBar(
-                title = "Puja Samagri",
+                title = if (isHindi) "पूजा सामग्री एवं किट" else "Puja Samagri",
                 onBackClick = { viewModel.navigateTo(Screen.Home) },
                 actions = {
                     Box(modifier = Modifier.padding(end = 8.dp), contentAlignment = Alignment.TopEnd) {
@@ -100,7 +101,7 @@ fun PujaSamagriScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Search for samagri, kits, diyas...", fontSize = 15.sp) },
+                placeholder = { Text(if (isHindi) "सामग्री, किट, दीया खोजें..." else "Search for samagri, kits, diyas...", fontSize = 15.sp) },
                 leadingIcon = {
                     Icon(Icons.Default.Search, contentDescription = null, tint = VedikaOrange, modifier = Modifier.size(22.dp))
                 },
@@ -125,6 +126,15 @@ fun PujaSamagriScreen(
             ) {
                 items(categories) { category ->
                     val isSelected = selectedCategory == category
+                    val displayCat = if (!isHindi) category else when (category) {
+                        "All" -> "सभी"
+                        "Puja Kits" -> "पूजा किट"
+                        "Havan Samagri" -> "हवन सामग्री"
+                        "Idols" -> "प्रतिमाएं"
+                        "Diyas" -> "दीया"
+                        else -> category
+                    }
+
                     Surface(
                         onClick = { selectedCategory = category },
                         shape = RoundedCornerShape(20.dp),
@@ -137,7 +147,7 @@ fun PujaSamagriScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = category,
+                                text = displayCat,
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (isSelected) Color.White else VedikaTextDark,
@@ -160,6 +170,7 @@ fun PujaSamagriScreen(
                 items(filteredProducts) { product ->
                     SamagriGridCard(
                         product = product,
+                        isHindi = isHindi,
                         onAdd = { viewModel.addToCart(product.id) }
                     )
                 }
@@ -171,6 +182,7 @@ fun PujaSamagriScreen(
 @Composable
 fun SamagriGridCard(
     product: SamagriProduct,
+    isHindi: Boolean = false,
     onAdd: () -> Unit
 ) {
     Surface(
@@ -188,7 +200,6 @@ fun SamagriGridCard(
                     .height(130.dp)
                     .clip(RoundedCornerShape(14.dp))
             ) {
-                // Real Authentic Samagri Visual
                 VedikaSamagriImage(
                     product = product,
                     modifier = Modifier.fillMaxSize(),
@@ -214,7 +225,7 @@ fun SamagriGridCard(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = product.name,
+                text = if (isHindi && product.hindiName.isNotBlank()) product.hindiName else product.name,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = VedikaTextDark,
@@ -257,7 +268,7 @@ fun SamagriGridCard(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                     modifier = Modifier.height(38.dp)
                 ) {
-                    Text("Add", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(if (isHindi) "जोड़ें" else "Add", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
             }
         }

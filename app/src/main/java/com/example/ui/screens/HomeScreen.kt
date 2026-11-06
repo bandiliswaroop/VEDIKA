@@ -13,7 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +32,7 @@ import coil.request.ImageRequest
 import com.example.data.VedikaData
 import com.example.model.ServiceItem
 import com.example.ui.components.*
+import com.example.ui.components.discovery.DiscoveryUnavailableState
 import com.example.ui.theme.*
 import com.example.viewmodel.Screen
 import com.example.viewmodel.VedikaUiState
@@ -43,6 +44,23 @@ fun HomeScreen(
     uiState: VedikaUiState,
     modifier: Modifier = Modifier
 ) {
+    val isHindi = uiState.isHindi
+
+    val greetingName = uiState.userName
+        .takeIf { !uiState.isGuest && uiState.userName.isNotBlank() }
+        ?.split(" ")
+        ?.firstOrNull()
+
+    val currentHour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    val timeGreeting = when (currentHour) {
+        in 0..11 -> if (isHindi) "शुभ प्रभात" else "Good Morning"
+        in 12..16 -> if (isHindi) "शुभ दोपहर" else "Good Afternoon"
+        else -> if (isHindi) "शुभ संध्या" else "Good Evening"
+    }
+
+    var isLoading by remember { mutableStateOf(false) }
+    var hasError by remember { mutableStateOf(false) }
+
     Scaffold(
         containerColor = VedikaCream,
         topBar = {
@@ -51,7 +69,7 @@ fun HomeScreen(
                 onCitySelected = { viewModel.selectCity(it) },
                 onNotificationClick = { viewModel.navigateTo(Screen.Notifications) },
                 hasUnreadNotifications = uiState.notifications.any { it.isUnread },
-                isHindi = uiState.isHindi,
+                isHindi = isHindi,
                 onToggleLanguage = { viewModel.toggleLanguage() }
             )
         },
@@ -69,7 +87,7 @@ fun HomeScreen(
             contentPadding = PaddingValues(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. Personalized Greeting Header with Devotee Portrait
+            // 1. Personalized Greeting Header
             item {
                 Row(
                     modifier = Modifier
@@ -80,7 +98,11 @@ fun HomeScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Good Morning\n${uiState.userName.split(" ").firstOrNull() ?: "Mohit"} 👋",
+                            text = if (greetingName == null) {
+                                if (isHindi) "वेदिका में आपका स्वागत है" else "Welcome to VEDIKA"
+                            } else {
+                                "$timeGreeting\n$greetingName 👋"
+                            },
                             style = MaterialTheme.typography.headlineMedium.copy(
                                 fontWeight = FontWeight.ExtraBold,
                                 color = VedikaTextDark,
@@ -90,7 +112,7 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "May your day be filled with\npeace and positivity ✨",
+                            text = if (isHindi) "आपका दिन सुख और शांति से परिपूर्ण हो ✨" else "May your day be filled with\npeace and positivity ✨",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = VedikaTextMuted,
                                 fontSize = 13.sp,
@@ -99,7 +121,6 @@ fun HomeScreen(
                         )
                     }
 
-                    // Avatar with golden border & halo
                     Surface(
                         onClick = { viewModel.setBottomNavTab("Profile") },
                         shape = CircleShape,
@@ -110,21 +131,30 @@ fun HomeScreen(
                             .shadow(4.dp, CircleShape, spotColor = Color(0x20000000))
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=300&q=80")
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = "Profile",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
+                            if (uiState.isGuest) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Person,
+                                    contentDescription = "Guest profile",
+                                    tint = VedikaOrangeDark,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            } else {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data("https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=300&q=80")
+                                        .crossfade(true)
+                                        .build(),
+                                    contentDescription = "Profile",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // 2. Search Bar with Mic & Filter Icons
+            // 2. Search Bar
             item {
                 Surface(
                     onClick = { viewModel.navigateTo(Screen.Search) },
@@ -151,14 +181,13 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "Search puja, temple, pandit...",
+                            text = if (isHindi) "पूजा, मंदिर, पंडित जी खोजें..." else "Search puja, temple, pandit...",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = VedikaTextMuted,
                                 fontSize = 14.sp
                             ),
                             modifier = Modifier.weight(1f)
                         )
-                        // Mic icon
                         Icon(
                             imageVector = Icons.Default.Mic,
                             contentDescription = "Voice Search",
@@ -166,7 +195,6 @@ fun HomeScreen(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        // Sliders / filter icon
                         Icon(
                             imageVector = Icons.Default.Tune,
                             contentDescription = "Filter",
@@ -207,54 +235,51 @@ fun HomeScreen(
                                     )
                                 )
                         ) {
-                            // Right side temple visual art illustration
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.CenterEnd)
                                     .fillMaxHeight()
-                                    .width(170.dp)
-                                    .padding(end = 4.dp, top = 8.dp, bottom = 8.dp)
+                                    .width(148.dp)
+                                    .padding(end = 8.dp, top = 8.dp, bottom = 8.dp)
                                     .clip(RoundedCornerShape(18.dp))
                             ) {
                                 TempleVisualArt(
-                                    templeName = "Baba Baidyanath Dham",
+                                    templeName = "Temple discovery",
                                     modifier = Modifier.fillMaxSize(),
                                     cornerRadius = 18.dp
                                 )
                             }
 
-                            // Left side banner copy & "Book Now →" button
                             Column(
                                 modifier = Modifier
                                     .fillMaxHeight()
-                                    .fillMaxWidth(0.62f)
-                                    .padding(start = 18.dp, top = 18.dp, bottom = 18.dp),
+                                    .fillMaxWidth(0.54f)
+                                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
                                 verticalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column {
                                     Text(
-                                        text = "Book Authentic\nPuja Services",
+                                        text = if (isHindi) "वैदिक पूजा\nसेवाएं देखें" else "Explore\nPuja Services",
                                         style = MaterialTheme.typography.titleLarge.copy(
                                             fontWeight = FontWeight.ExtraBold,
                                             color = VedikaTextDark,
-                                            fontSize = 20.sp,
-                                            lineHeight = 25.sp
+                                            fontSize = 18.sp,
+                                            lineHeight = 22.sp
                                         )
                                     )
-                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = "From trusted pandits, right at your home or at sacred temples.",
+                                        text = if (isHindi) "अनुष्ठान एवं पूजा विवरण देखें।" else "Browse catalogue & review service details.",
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             color = VedikaTextMedium,
-                                            fontSize = 12.sp,
-                                            lineHeight = 16.sp
+                                            fontSize = 11.sp,
+                                            lineHeight = 15.sp
                                         ),
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis
                                     )
                                 }
 
-                                // Orange gradient pill button
                                 Box(
                                     modifier = Modifier
                                         .height(38.dp)
@@ -265,13 +290,13 @@ fun HomeScreen(
                                                 colors = listOf(Color(0xFFFF6D00), Color(0xFFFF4500))
                                             )
                                         )
-                                        .clickable { viewModel.openServiceDetail("s1") }
+                                        .clickable { viewModel.setBottomNavTab("Explore") }
                                         .padding(horizontal = 16.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
-                                            text = "Book Now",
+                                            text = if (isHindi) "देखें" else "Explore",
                                             style = MaterialTheme.typography.labelMedium.copy(
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White,
@@ -291,7 +316,6 @@ fun HomeScreen(
                         }
                     }
 
-                    // Carousel dots below promo banner
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -319,7 +343,7 @@ fun HomeScreen(
                 }
             }
 
-            // 4. Quick Actions 2×4 Grid (8 rounded icon cards)
+            // 4. Quick Tool Shortcuts Grid
             item {
                 Column(
                     modifier = Modifier
@@ -327,63 +351,70 @@ fun HomeScreen(
                         .padding(horizontal = 20.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Row 1: Puja Booking, Pandit Ji, Temple Darshan, Panchang
+                    Text(
+                        text = if (isHindi) "धार्मिक सुविधाएं एवं साधन" else "Devotional Tools & Services",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = VedikaTextDark,
+                            fontSize = 18.sp
+                        )
+                    )
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        MockupActionIcon(
-                            icon = Icons.Outlined.LocalFlorist,
-                            label = "Puja Booking",
-                            onClick = { viewModel.setBottomNavTab("Explore") }
-                        )
-                        MockupActionIcon(
-                            icon = Icons.Outlined.Person,
-                            label = "Pandit Ji",
-                            onClick = { viewModel.navigateTo(Screen.PanditBooking) }
-                        )
-                        MockupActionIcon(
-                            icon = Icons.Outlined.TempleHindu,
-                            label = "Temple Darshan",
-                            onClick = { viewModel.navigateTo(Screen.TempleDarshan) }
-                        )
                         MockupActionIcon(
                             icon = Icons.Outlined.DateRange,
-                            label = "Panchang",
+                            label = if (isHindi) "पंचांग" else "Panchang",
                             onClick = { viewModel.setBottomNavTab("Panchang") }
                         )
-                    }
-
-                    // Row 2: Mantra Jaap, Aarti & Bhajan, Spiritual Articles, Festivals/Donate
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
                         MockupActionIcon(
                             icon = Icons.Outlined.SelfImprovement,
-                            label = "Mantra Jaap",
+                            label = if (isHindi) "जप माला" else "Japa Mala",
                             onClick = { viewModel.navigateTo(Screen.MantraJapa) }
                         )
                         MockupActionIcon(
-                            icon = Icons.Outlined.MenuBook,
-                            label = "Spiritual Articles",
-                            onClick = { viewModel.navigateTo(Screen.KathaBhajan) }
-                        )
-                        MockupActionIcon(
-                            icon = Icons.Outlined.Festival,
-                            label = "Festivals",
+                            icon = Icons.Outlined.ShoppingBag,
+                            label = if (isHindi) "पूजा सामग्री" else "Puja Samagri",
                             onClick = { viewModel.navigateTo(Screen.PujaSamagri) }
                         )
                         MockupActionIcon(
-                            icon = Icons.Outlined.VolunteerActivism,
-                            label = "Donate",
-                            onClick = { viewModel.navigateTo(Screen.MoreMenu) }
+                            icon = Icons.Outlined.MenuBook,
+                            label = if (isHindi) "कथा एवं भजन" else "Katha & Bhajan",
+                            onClick = { viewModel.navigateTo(Screen.KathaBhajan) }
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        MockupActionIcon(
+                            icon = Icons.Outlined.Map,
+                            label = if (isHindi) "पास के मंदिर" else "Nearby Map",
+                            onClick = { viewModel.navigateTo(Screen.NearbyMap) }
+                        )
+                        MockupActionIcon(
+                            icon = Icons.Outlined.TempleHindu,
+                            label = if (isHindi) "मंदिर दर्शन" else "Temple Darshan",
+                            onClick = { viewModel.navigateTo(Screen.TempleDarshan) }
+                        )
+                        MockupActionIcon(
+                            icon = Icons.Outlined.Person,
+                            label = if (isHindi) "पंडित जी बुकिंग" else "Book Pandit",
+                            onClick = { viewModel.navigateTo(Screen.PanditBooking) }
+                        )
+                        MockupActionIcon(
+                            icon = Icons.Outlined.Explore,
+                            label = if (isHindi) "सभी देखें" else "Explore All",
+                            onClick = { viewModel.setBottomNavTab("Explore") }
                         )
                     }
                 }
             }
 
-            // 5. Popular Pujas Section Header with "View All →"
+            // 5. Popular Pujas Section Header
             item {
                 Row(
                     modifier = Modifier
@@ -393,7 +424,7 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Popular Pujas",
+                        text = if (isHindi) "लोकप्रिय पूजा अनुष्ठान" else "Popular Pujas",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = VedikaTextDark,
@@ -408,7 +439,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "View All",
+                            text = if (isHindi) "सभी देखें" else "View All",
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = VedikaOrangeDark,
@@ -426,15 +457,76 @@ fun HomeScreen(
                 }
             }
 
-            // 6. Popular Puja Card (Satyanarayan Puja, Griha Pravesh)
-            items(VedikaData.services.take(3)) { service ->
-                PopularPujaCard(
-                    service = service,
-                    onClick = { viewModel.openServiceDetail(service.id) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                )
+            // 6. Dynamic Content States: Loading, Error & Retry, Empty, Success
+            when {
+                isLoading -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = VedikaOrange)
+                        }
+                    }
+                }
+                hasError -> {
+                    item {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color(0xFFFFEBEE),
+                            border = BorderStroke(1.dp, Color(0xFFFFCDD2)),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = if (isHindi) "पूजा सूची लोड करने में विफल" else "Failed to load dynamic service catalogue",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFC62828),
+                                    fontSize = 14.sp
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Button(
+                                    onClick = {
+                                        hasError = false
+                                        isLoading = false
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)),
+                                    modifier = Modifier.height(36.dp)
+                                ) {
+                                    Text(if (isHindi) "पुनः प्रयास करें" else "Retry", color = Color.White, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+                VedikaData.services.isEmpty() -> {
+                    item {
+                        DiscoveryUnavailableState(
+                            title = if (isHindi) "पूजा सूची उपलब्ध नहीं है" else "Service catalogue unavailable",
+                            message = if (isHindi) "सेवाएं उपलब्ध होने पर यहां दिखाई देंगी।" else "Services will appear here when the catalogue is available.",
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                    }
+                }
+                else -> {
+                    items(VedikaData.services.take(3)) { service ->
+                        PopularPujaCard(
+                            service = service,
+                            isHindi = isHindi,
+                            onClick = { viewModel.openServiceDetail(service.id) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -485,6 +577,7 @@ private fun MockupActionIcon(
 @Composable
 private fun PopularPujaCard(
     service: ServiceItem,
+    isHindi: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -501,7 +594,6 @@ private fun PopularPujaCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Deity / Puja artwork thumbnail
             Box(
                 modifier = Modifier
                     .size(68.dp)
@@ -516,7 +608,6 @@ private fun PopularPujaCard(
 
             Spacer(modifier = Modifier.width(14.dp))
 
-            // Details
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = service.title,
@@ -527,22 +618,13 @@ private fun PopularPujaCard(
                     )
                 )
                 Spacer(modifier = Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = "Rating",
-                        tint = VedikaStarAmber,
-                        modifier = Modifier.size(14.dp)
+                Text(
+                    text = if (isHindi) "बुकिंग से पूर्व विवरण देखें" else "Catalogue details available before booking",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = VedikaTextMuted,
+                        fontSize = 12.sp
                     )
-                    Spacer(modifier = Modifier.width(3.dp))
-                    Text(
-                        text = "${service.rating} (${if (service.reviewCount >= 1000) String.format("%.1fk", service.reviewCount / 1000.0) else "${service.reviewCount}"} bookings)",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = VedikaTextMuted,
-                            fontSize = 12.sp
-                        )
-                    )
-                }
+                )
                 Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = service.shortDescription,
@@ -564,7 +646,6 @@ private fun PopularPujaCard(
                 )
             }
 
-            // Right chevron button
             Surface(
                 shape = CircleShape,
                 color = Color(0xFFFFF2E6),

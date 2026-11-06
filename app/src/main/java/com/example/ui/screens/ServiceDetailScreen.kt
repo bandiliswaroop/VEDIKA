@@ -35,6 +35,8 @@ fun ServiceDetailScreen(
     uiState: com.example.viewmodel.VedikaUiState,
     modifier: Modifier = Modifier
 ) {
+    val isHindi = uiState.isHindi
+
     val service = remember(uiState.selectedServiceId) {
         VedikaData.services.find { it.id == uiState.selectedServiceId } ?: VedikaData.services.first()
     }
@@ -104,10 +106,10 @@ fun ServiceDetailScreen(
                             )
                         )
                         Text(
-                            text = "All inclusive pricing",
+                            text = if (isHindi) "पारदर्शी सांकेतिक दर; बुकिंग से पूर्व पुष्टि" else "Transparent indicative pricing; confirmed before booking",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = VedikaTextMuted,
-                                fontSize = 12.sp
+                                fontSize = 11.sp
                             )
                         )
                     }
@@ -121,7 +123,7 @@ fun ServiceDetailScreen(
                             .height(52.dp)
                     ) {
                         Text(
-                            text = "Book Now",
+                            text = if (isHindi) "अभी बुक करें" else "Book Now",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
@@ -139,7 +141,7 @@ fun ServiceDetailScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
-            // Real Hero Photography with Play Overlay and Page Indicator
+            // Hero Image
             item {
                 Box(
                     modifier = Modifier
@@ -153,7 +155,6 @@ fun ServiceDetailScreen(
                         cornerRadius = 22.dp
                     )
 
-                    // Play Video Overlay
                     Box(
                         modifier = Modifier
                             .align(Alignment.Center)
@@ -170,7 +171,6 @@ fun ServiceDetailScreen(
                         )
                     }
 
-                    // 1/8 Page indicator
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = Color(0xB3000000),
@@ -213,7 +213,6 @@ fun ServiceDetailScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Price Row
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -257,7 +256,7 @@ fun ServiceDetailScreen(
                 }
             }
 
-            // Specs Row (Duration, Pandit, Samagri)
+            // Specs Row
             item {
                 Row(
                     modifier = Modifier
@@ -266,20 +265,20 @@ fun ServiceDetailScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     SpecBox(
-                        title = "Duration",
+                        title = if (isHindi) "अवधि" else "Duration",
                         value = service.durationHours,
                         icon = Icons.Default.Schedule,
                         modifier = Modifier.weight(1f)
                     )
                     SpecBox(
-                        title = "Pandit",
+                        title = if (isHindi) "पंडित जी" else "Pandit",
                         value = "${service.panditCount} Pandit",
                         icon = Icons.Default.Person,
                         modifier = Modifier.weight(1f)
                     )
                     SpecBox(
-                        title = "Samagri",
-                        value = if (service.samagriIncluded) "Included" else "Extra",
+                        title = if (isHindi) "सामग्री" else "Samagri",
+                        value = if (service.samagriIncluded) (if (isHindi) "शामिल" else "Included") else (if (isHindi) "अतिरिक्त" else "Extra"),
                         icon = Icons.Default.Inventory2,
                         modifier = Modifier.weight(1f)
                     )
@@ -332,7 +331,7 @@ fun ServiceDetailScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Verified Pandit",
+                                text = if (isHindi) "सत्यापित आचार्य" else "Verified Vedic Provider",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = VedikaGreen,
@@ -344,9 +343,9 @@ fun ServiceDetailScreen(
                 }
             }
 
-            // Tabs: Overview | What's Included | Process | Checklist | Reviews
+            // Tabs: Overview | What's Included | Process | Checklist | Requirements
             item {
-                val tabs = listOf("Overview", "What's Included", "Process", "Checklist", "Reviews")
+                val tabs = listOf("Overview", "What's Included", "Process", "Checklist", "Requirements")
                 Surface(
                     color = VedikaCreamDark,
                     modifier = Modifier.fillMaxWidth()
@@ -359,6 +358,15 @@ fun ServiceDetailScreen(
                     ) {
                         tabs.forEach { tab ->
                             val isSelected = selectedTab == tab
+                            val tabLabel = if (!isHindi) tab else when (tab) {
+                                "Overview" -> "विवरण"
+                                "What's Included" -> "क्या शामिल है"
+                                "Process" -> "विधि"
+                                "Checklist" -> "चेकलिस्ट"
+                                "Requirements" -> "आवश्यकता"
+                                else -> tab
+                            }
+
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
@@ -368,7 +376,7 @@ fun ServiceDetailScreen(
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(
-                                        text = tab,
+                                        text = tabLabel,
                                         style = MaterialTheme.typography.labelLarge.copy(
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                             color = if (isSelected) VedikaOrange else VedikaTextMedium,
@@ -463,7 +471,7 @@ fun ServiceDetailScreen(
                         "Checklist" -> {
                             Column {
                                 Text(
-                                    text = "Ritual Preparation Checklist (तैयारी सूची)",
+                                    text = if (isHindi) "अनुष्ठान तैयारी चेकलिस्ट" else "Ritual Preparation Checklist (तैयारी सूची)",
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = VedikaTextDark,
@@ -472,7 +480,7 @@ fun ServiceDetailScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Keep these items ready before Pandit ji arrives. Check off items as you arrange them.",
+                                    text = if (isHindi) "पंडित जी के आगमन से पूर्व ये वस्तुएं तैयार रखें।" else "Keep these items ready before Pandit ji arrives. Check off items as you arrange them.",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = VedikaTextMedium,
                                         fontSize = 13.sp
@@ -480,9 +488,8 @@ fun ServiceDetailScreen(
                                 )
                                 Spacer(modifier = Modifier.height(14.dp))
 
-                                // Household arranged items
                                 Text(
-                                    text = "ARRANGED AT HOME (घर पर व्यवस्था):",
+                                    text = if (isHindi) "घर पर व्यवस्था (ARRANGED AT HOME):" else "ARRANGED AT HOME (घर पर व्यवस्था):",
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = VedikaOrangeDark,
@@ -526,9 +533,8 @@ fun ServiceDetailScreen(
                                 HorizontalDivider(color = VedikaDivider, thickness = 0.8.dp)
                                 Spacer(modifier = Modifier.height(14.dp))
 
-                                // Pandit brought items
                                 Text(
-                                    text = "PROVIDED BY VEDIKA PANDIT (आचार्य जी लाएंगे):",
+                                    text = if (isHindi) "आचार्य जी लाएंगे (PROVIDED BY PANDIT):" else "PROVIDED BY VEDIKA PANDIT (आचार्य जी लाएंगे):",
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = VedikaGreen,
@@ -568,19 +574,50 @@ fun ServiceDetailScreen(
                                 }
                             }
                         }
-                        "Reviews" -> {
-                            Text(
-                                text = "Based on ${service.reviewCount} verified ceremonies across Jharkhand, Bihar, and UP. Rated 4.9 out of 5 stars by families for punctuality, purity of Sanskrit chanting, and clear guidance.",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = VedikaTextDark,
-                                    lineHeight = 24.sp,
-                                    fontSize = 15.sp
+                        "Requirements" -> {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                RequirementCard(
+                                    title = if (isHindi) "स्थान संबंधी आवश्यकताएँ" else "Location Requirements",
+                                    description = if (isHindi) "स्वच्छ, शांत पूजा स्थान या मंडप क्षेत्र पूर्व या उत्तर दिशा की ओर।" else "Clean, quiet puja space or mandap area facing East or North. Water source and electrical point nearby for lamps/audio if needed."
                                 )
-                            )
+                                RequirementCard(
+                                    title = if (isHindi) "आचार्य जी योग्यता" else "Provider Specialization",
+                                    description = if (isHindi) "गुरुकुल प्रशिक्षित एवं शुक्ल यजुर्वेद पारंगत आचार्यों द्वारा।" else "Performed by verified Vedic Acharyas and Pandits with formal Gurukul training and expertise in Shukla Yajurveda and Karma Kanda."
+                                )
+                                RequirementCard(
+                                    title = if (isHindi) "यात्रा एवं व्यवस्था शर्ते" else "Travel & Logistics Conditions",
+                                    description = if (isHindi) "शहर सीमा में स्थानीय परिवहन शामिल।" else "Local conveyance included within city limits. Inter-city ceremonies support travel fee arrangements and pandit accommodation when applicable."
+                                )
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun RequirementCard(title: String, description: String) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = VedikaSurface,
+        border = BorderStroke(1.dp, VedikaCardBorder)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                color = VedikaOrangeDark,
+                fontSize = 15.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = description,
+                color = VedikaTextDark,
+                fontSize = 14.sp,
+                lineHeight = 20.sp
+            )
         }
     }
 }

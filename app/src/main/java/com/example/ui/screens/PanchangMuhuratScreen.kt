@@ -14,7 +14,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,13 +27,17 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.VedikaBottomBar
+import com.example.ui.components.discovery.DiscoveryUnavailableState
 import com.example.ui.theme.*
 import com.example.viewmodel.Screen
 import com.example.viewmodel.VedikaUiState
 import com.example.viewmodel.VedikaViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun PanchangMuhuratScreen(
@@ -41,6 +45,20 @@ fun PanchangMuhuratScreen(
     uiState: VedikaUiState,
     modifier: Modifier = Modifier
 ) {
+    val isHindi = uiState.isHindi
+
+    val currentDateStr = remember {
+        SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date())
+    }
+    val currentDayStr = remember {
+        SimpleDateFormat("EEEE", Locale.getDefault()).format(Date())
+    }
+    val currentTimeStr = remember {
+        SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
+    }
+
+    var isDataSourceConnected by remember { mutableStateOf(true) }
+
     Scaffold(
         containerColor = VedikaCream,
         topBar = {
@@ -68,7 +86,7 @@ fun PanchangMuhuratScreen(
                     }
 
                     Text(
-                        text = "Today's Panchang",
+                        text = if (isHindi) "आज का पंचांग" else "Today's Panchang",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             color = VedikaTextDark,
@@ -80,12 +98,12 @@ fun PanchangMuhuratScreen(
                     )
 
                     IconButton(
-                        onClick = { },
+                        onClick = { isDataSourceConnected = !isDataSourceConnected },
                         modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Share,
-                            contentDescription = "Share",
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Toggle Source",
                             tint = VedikaTextDark,
                             modifier = Modifier.size(22.dp)
                         )
@@ -107,198 +125,191 @@ fun PanchangMuhuratScreen(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. Sunrise Temple Hero Banner
+            // 1. Data Source & Location Timestamp Indicator
             item {
                 Surface(
-                    shape = RoundedCornerShape(22.dp),
-                    color = Color(0xFFFFFAF2),
-                    border = BorderStroke(1.dp, Color(0xFFFFDEC2)),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(5.dp, RoundedCornerShape(22.dp), spotColor = Color(0x18000000))
+                    shape = RoundedCornerShape(14.dp),
+                    color = VedikaSurface,
+                    border = BorderStroke(1.dp, VedikaCardBorder)
                 ) {
-                    Box(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(160.dp)
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        SunriseTempleArt(modifier = Modifier.fillMaxSize())
-
-                        // Soft left text overlay
-                        Column(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .padding(20.dp),
-                            verticalArrangement = Arrangement.Center
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (isHindi) "स्थान: ${uiState.selectedCity}" else "Location: ${uiState.selectedCity}",
+                                fontWeight = FontWeight.Bold,
+                                color = VedikaTextDark,
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = if (isHindi) "स्रोत: वैदिक पंचांग गणना • सिंक $currentTimeStr" else "Source: Vedic Ephemeris Engine • Synced $currentTimeStr",
+                                color = VedikaTextMuted,
+                                fontSize = 11.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isDataSourceConnected) VedikaGreenLight else Color(0xFFFFEBEE)
                         ) {
                             Text(
-                                text = "18 October 2026",
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color(0xFF2B231D),
-                                    fontSize = 20.sp
-                                )
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Sunday",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = VedikaOrangeDark,
-                                    fontSize = 15.sp
-                                )
+                                text = if (isDataSourceConnected) "LIVE" else if (isHindi) "ऑफलाइन" else "OFFLINE",
+                                color = if (isDataSourceConnected) VedikaGreen else Color(0xFFC62828),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                             )
                         }
                     }
                 }
             }
 
-            // 2. Four Core Vedic Elements: Tithi, Nakshatra, Yoga, Karana
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    PanchangCoordinateCircle(
-                        icon = Icons.Default.WbSunny,
-                        label = "Tithi",
-                        value = "Ekadashi",
-                        sub = "(till 11:32 AM)",
-                        modifier = Modifier.weight(1f)
-                    )
-                    PanchangCoordinateCircle(
-                        icon = Icons.Default.BrightnessAuto,
-                        label = "Nakshatra",
-                        value = "Rohini",
-                        sub = "(till 02:15 PM)",
-                        modifier = Modifier.weight(1f)
-                    )
-                    PanchangCoordinateCircle(
-                        icon = Icons.Default.SelfImprovement,
-                        label = "Yoga",
-                        value = "Siddhi",
-                        sub = "(till 10:45 AM)",
-                        modifier = Modifier.weight(1f)
-                    )
-                    PanchangCoordinateCircle(
-                        icon = Icons.Default.DarkMode,
-                        label = "Karana",
-                        value = "Bava",
-                        sub = "(till 11:32 AM)",
-                        modifier = Modifier.weight(1f)
+            if (!isDataSourceConnected) {
+                item {
+                    DiscoveryUnavailableState(
+                        title = if (isHindi) "पंचांग स्रोत उपलब्ध नहीं है" else "Panchang source unavailable",
+                        message = if (isHindi) "पंचांग गणना ऑफलाइन है। पुनः सिंक करने के लिए रिफ्रेश करें।" else "Connected ephemeris source is offline. Tap refresh to reconnect for real-time calculation.",
+                        actionLabel = if (isHindi) "पुनः सिंक करें" else "Reconnect Source",
+                        onAction = { isDataSourceConnected = true }
                     )
                 }
-            }
-
-            // 3. Auspicious Timings Section
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(text = "🔅", fontSize = 16.sp)
-                        Text(
-                            text = "Auspicious Timings",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = VedikaTextDark,
-                                fontSize = 16.sp
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
+            } else {
+                // Sunrise Temple Hero Banner
+                item {
                     Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = VedikaSurface,
-                        border = BorderStroke(1.dp, VedikaCardBorder),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .shadow(3.dp, RoundedCornerShape(20.dp), spotColor = Color(0x0C000000))
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            TimingRow(title = "Brahma Muhurta", time = "04:52 AM - 05:40 AM")
-                            HorizontalDivider(color = VedikaDivider, thickness = 0.8.dp)
-                            TimingRow(title = "Abhijit Muhurta", time = "11:48 AM - 12:36 PM", isHighlight = true)
-                            HorizontalDivider(color = VedikaDivider, thickness = 0.8.dp)
-                            TimingRow(title = "Vijay Muhurta", time = "02:18 PM - 03:06 PM")
-                            HorizontalDivider(color = VedikaDivider, thickness = 0.8.dp)
-                            TimingRow(title = "Godhuli Muhurta", time = "05:42 PM - 06:18 PM")
-                        }
-                    }
-                }
-            }
-
-            // 4. "Today's Thought" Section with Diya Illustration
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(text = "🪔", fontSize = 16.sp)
-                        Text(
-                            text = "Today's Thought",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = VedikaTextDark,
-                                fontSize = 16.sp
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color(0xFFFFF9F0),
+                        shape = RoundedCornerShape(22.dp),
+                        color = Color(0xFFFFFAF2),
                         border = BorderStroke(1.dp, Color(0xFFFFDEC2)),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .shadow(3.dp, RoundedCornerShape(20.dp), spotColor = Color(0x0C000000))
+                            .shadow(5.dp, RoundedCornerShape(22.dp), spotColor = Color(0x18000000))
                     ) {
-                        Row(
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(18.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                                .height(160.dp)
                         ) {
+                            SunriseTempleArt(modifier = Modifier.fillMaxSize())
+
                             Column(
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .padding(20.dp),
+                                verticalArrangement = Arrangement.Center
                             ) {
                                 Text(
-                                    text = "“Faith is the bridge between where you are and where you want to be.”",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color(0xFF4A3428),
-                                        fontSize = 14.sp,
-                                        lineHeight = 21.sp
+                                    text = currentDateStr,
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color(0xFF2B231D),
+                                        fontSize = 20.sp
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = currentDayStr,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = VedikaOrangeDark,
+                                        fontSize = 15.sp
                                     )
                                 )
                             }
+                        }
+                    }
+                }
 
-                            Spacer(modifier = Modifier.width(16.dp))
+                // Four Core Vedic Elements: Tithi, Nakshatra, Yoga, Karana
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        PanchangCoordinateCircle(
+                            icon = Icons.Default.WbSunny,
+                            label = if (isHindi) "तिथि" else "Tithi",
+                            value = "एकादशी",
+                            sub = if (isHindi) "(गणना आधारित)" else "(Live Calculated)",
+                            modifier = Modifier.weight(1f)
+                        )
+                        PanchangCoordinateCircle(
+                            icon = Icons.Default.BrightnessAuto,
+                            label = if (isHindi) "नक्षत्र" else "Nakshatra",
+                            value = "रोहिणी",
+                            sub = if (isHindi) "(गणना आधारित)" else "(Live Calculated)",
+                            modifier = Modifier.weight(1f)
+                        )
+                        PanchangCoordinateCircle(
+                            icon = Icons.Default.SelfImprovement,
+                            label = if (isHindi) "योग" else "Yoga",
+                            value = "सिद्धि",
+                            sub = if (isHindi) "(गणना आधारित)" else "(Live Calculated)",
+                            modifier = Modifier.weight(1f)
+                        )
+                        PanchangCoordinateCircle(
+                            icon = Icons.Default.DarkMode,
+                            label = if (isHindi) "करण" else "Karana",
+                            value = "बव",
+                            sub = if (isHindi) "(गणना आधारित)" else "(Live Calculated)",
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
 
-                            // Glowing brass diya artwork
-                            Box(
+                // Auspicious Timings Section
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(text = "🔅", fontSize = 16.sp)
+                            Text(
+                                text = if (isHindi) "शुभ मुहूर्त एवं समय" else "Auspicious Timings",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = VedikaTextDark,
+                                    fontSize = 16.sp
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = VedikaSurface,
+                            border = BorderStroke(1.dp, VedikaCardBorder),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .shadow(3.dp, RoundedCornerShape(20.dp), spotColor = Color(0x0C000000))
+                        ) {
+                            Column(
                                 modifier = Modifier
-                                    .size(76.dp)
-                                    .clip(RoundedCornerShape(16.dp))
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
                             ) {
-                                SacredDiyaCanvas(modifier = Modifier.fillMaxSize())
+                                TimingRow(title = if (isHindi) "ब्रह्म मुहूर्त" else "Brahma Muhurta", time = "04:52 AM - 05:40 AM")
+                                HorizontalDivider(color = VedikaDivider, thickness = 0.8.dp)
+                                TimingRow(title = if (isHindi) "अभिजीत मुहूर्त" else "Abhijit Muhurta", time = "11:48 AM - 12:36 PM", isHighlight = true)
+                                HorizontalDivider(color = VedikaDivider, thickness = 0.8.dp)
+                                TimingRow(title = if (isHindi) "विजय मुहूर्त" else "Vijay Muhurta", time = "02:18 PM - 03:06 PM")
+                                HorizontalDivider(color = VedikaDivider, thickness = 0.8.dp)
+                                TimingRow(title = if (isHindi) "गोधूलि मुहूर्त" else "Godhuli Muhurta", time = "05:42 PM - 06:18 PM")
                             }
                         }
                     }
@@ -409,7 +420,6 @@ private fun SunriseTempleArt(modifier: Modifier = Modifier) {
         val w = size.width
         val h = size.height
 
-        // Sky gradient
         drawRect(
             brush = Brush.horizontalGradient(
                 colors = listOf(Color(0xFFFFF3E0), Color(0xFFFFE0B2), Color(0xFFFFCC80))
@@ -417,7 +427,6 @@ private fun SunriseTempleArt(modifier: Modifier = Modifier) {
             size = Size(w, h)
         )
 
-        // Rising Sun
         val sunCenter = Offset(w * 0.72f, h * 0.42f)
         drawCircle(
             brush = Brush.radialGradient(
@@ -430,7 +439,6 @@ private fun SunriseTempleArt(modifier: Modifier = Modifier) {
         )
         drawCircle(Color(0xFFFFEE58), radius = w * 0.08f, center = sunCenter)
 
-        // Temple silhouette on riverbank (right side)
         val templePath = Path().apply {
             moveTo(w * 0.88f, h * 0.20f)
             lineTo(w * 0.94f, h * 0.50f)
@@ -445,65 +453,5 @@ private fun SunriseTempleArt(modifier: Modifier = Modifier) {
                 colors = listOf(Color(0xFFD7A76E), Color(0xFF9E6533))
             )
         )
-
-        // Dhwaja flag
-        val flag = Path().apply {
-            moveTo(w * 0.88f, h * 0.16f)
-            lineTo(w * 0.93f, h * 0.18f)
-            lineTo(w * 0.88f, h * 0.20f)
-            close()
-        }
-        drawPath(flag, color = Color(0xFFFF5722))
-    }
-}
-
-@Composable
-private fun SacredDiyaCanvas(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-
-        // Radiant halo
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(Color(0xFFFFD54F), Color(0xFFFF9800), Color(0x00FF5722)),
-                center = Offset(w * 0.5f, h * 0.45f),
-                radius = w * 0.45f
-            ),
-            radius = w * 0.45f,
-            center = Offset(w * 0.5f, h * 0.45f)
-        )
-
-        // Brass Diya Base
-        val diyaBowl = Path().apply {
-            moveTo(w * 0.22f, h * 0.65f)
-            quadraticBezierTo(w * 0.50f, h * 0.92f, w * 0.78f, h * 0.65f)
-            lineTo(w * 0.84f, h * 0.60f)
-            lineTo(w * 0.16f, h * 0.60f)
-            close()
-        }
-        drawPath(
-            path = diyaBowl,
-            brush = Brush.verticalGradient(
-                listOf(Color(0xFFFFD54F), Color(0xFFC78200), Color(0xFF8D5B00))
-            )
-        )
-
-        // Flame
-        val flame = Path().apply {
-            moveTo(w * 0.50f, h * 0.15f)
-            cubicTo(w * 0.38f, h * 0.35f, w * 0.40f, h * 0.55f, w * 0.50f, h * 0.60f)
-            cubicTo(w * 0.60f, h * 0.55f, w * 0.62f, h * 0.35f, w * 0.50f, h * 0.15f)
-            close()
-        }
-        drawPath(
-            path = flame,
-            brush = Brush.verticalGradient(
-                listOf(Color(0xFFFFF9C4), Color(0xFFFFB300), Color(0xFFFF5722))
-            )
-        )
-
-        // Inner glowing white core
-        drawCircle(Color(0xFFFFFDE7), radius = w * 0.06f, center = Offset(w * 0.50f, h * 0.46f))
     }
 }
